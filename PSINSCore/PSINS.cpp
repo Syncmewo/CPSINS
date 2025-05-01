@@ -7632,7 +7632,7 @@ void CAligntf::Init(const CSINS &sins0)
 
 	CSINSGNSS::Init(sins0);
 	mu = lvMINS = O31;
-	dcm = I33;
+	Cbs_bm = I33;
 	dtMINSdelay = 0.0;
 
 	Hk.SetMat3(0,3,I33);
@@ -7681,8 +7681,12 @@ void CAligntf::Feedback(int nnq, double fbts)
 	sins.eb  += *(CVect3*)&FBXk.dd[9];	sins.db += *(CVect3*)&FBXk.dd[12];  // 0-14 phi,dvn,mu,eb,db
 	lvMINS += *(CVect3*)&FBXk.dd[15];	// 15-17 lever
 	dtMINSdelay += FBXk.dd[18];			// 18 dt
-	//dcm = dcm * rv2m(-CVect3(FBXk.dd[6], FBXk.dd[7], FBXk.dd[8]));
-	//dcm = rv2m(-CVect3(FBXk.dd[6], FBXk.dd[7], FBXk.dd[8])) * dcm;
+
+	// 安装角（旋转矢量）mu 定义为：bm --> bs  即 C^bm_bs   C^n_bm = C^n_bs * C^bs_bm   则 bs --> bm 为 -mu
+
+	//下面两种更新方式近似等价
+	//Cbs_bm = Cbs_bm * rv2m(-CVect3(FBXk.dd[6], FBXk.dd[7], FBXk.dd[8]));  //C^bs_bm = C^bs_bm' * C^bm'_bm 
+	Cbs_bm = I33 - askew(mu);
 }
 
 int CAligntf::Update(const CVect3 *pwm, const CVect3 *pvm, int nSamples, double ts, int nSteps)
@@ -7707,8 +7711,8 @@ void CAligntf::SetMeasVnAtt(const CVect3 &vnMINS, const CVect3 &attMINS)
 		if(avpi.Interp(dtMINSdelay)) {
 			
 			CVect3 attMINS_rot90 = rotz(attMINS, 0 * DEG);
-			*(CVect3*)&Zk.dd[3] = qq2phi(a2qua(avpi.att)*rv2q(-mu), a2qua(attMINS_rot90));
-			//*(CVect3*)&Zk.dd[3] = qq2phi(a2qua(dcm * avpi.att), a2qua(attMINS));
+			//*(CVect3*)&Zk.dd[3] = qq2phi(a2qua(avpi.att)*rv2q(-mu), a2qua(attMINS_rot90));
+			*(CVect3*)&Zk.dd[3] = qq2phi(m2qua(a2mat(avpi.att) * Cbs_bm), a2qua(attMINS));
 			SetMeasFlag(00070);
 		}
 	}

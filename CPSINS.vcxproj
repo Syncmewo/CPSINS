@@ -123,7 +123,6 @@
     <ClCompile Include="Main_SinsGps.cpp" />
     <ClCompile Include="psinscore\KFApp.cpp" />
     <ClCompile Include="psinscore\PSINS.cpp" />
-    <ClCompile Include="uart\SerialPort.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="demo\PSINS_Demo.h" />

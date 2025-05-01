@@ -1322,7 +1322,7 @@ class CAligntf:public CSINSGNSS  // transfer alignment by 'velocity+attitude' me
 {
 public:
 	CVect3 mu, lvMINS;
-	CMat3 dcm;
+	CMat3 Cbs_bm;
 	double dtMINSdelay;
 	CAligntf(double ts);
 	CAligntf(const CSINS &sins0, double ts);
