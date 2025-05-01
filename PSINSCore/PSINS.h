@@ -28,7 +28,7 @@ Date: 17/02/2015, 19/07/2017, 11/12/2018, 27/12/2019, 12/12/2020, 22/11/2021, 17
 //#define PSINS_psinsassert
 //#define PSINS_MAT_COUNT
 //#define PSINS_STACK
-#define PSINS_CONSOLE_UART
+//#define PSINS_CONSOLE_UART
 //#define PSINS_VC_AFX_HEADER
 //#define PSINS_COMPLEX
 //#define PSINS_FAST_CALCULATION
@@ -1328,7 +1328,7 @@ public:
 	CAligntf(const CSINS &sins0, double ts);
 	void Init(const CSINS &sins0);
 	virtual void SetFt(int nnq);
-	virtual void SetHk(int nnq);//重新设置H阵 考虑杆臂和时间不同步
+	virtual void SetHk(int nnq);//设置H阵 考虑杆臂和时间不同步
 	virtual void Feedback(int nnq, double fbts);
 	int Update(const CVect3 *pwm, const CVect3 *pvm, int nSamples, double ts, int nSteps=5);
 	void SetMeasVnAtt(const CVect3 &vnMINS=O31, const CVect3 &attMINS=O31);
