@@ -135,6 +135,7 @@
     <None Include="data\PSINS20240616_070415.bin" />
     <None Include="data\transtrj.bin" />
     <None Include="matcfg.bin" />
+    <None Include="README.md" />
     <None Include="wvm.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
