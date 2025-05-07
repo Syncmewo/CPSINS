@@ -277,7 +277,7 @@ void Demo_SINSOD(void)
 	CFileRdWt fimu("imuod.bin",-8);	DataSensor8 *pDS=(DataSensor8*)&fimu.buff[0];
 
 	double Aligni0T = 60.0;
-	double AlignkfT = 120.0;
+	double AlignkfT = 110.0;
 	double tk0 = 0.0;
 
 	CVect3 pos0 = CVect3(0.492701432354952,1.97212828764260,40.2028701195959);
@@ -320,7 +320,7 @@ void Demo_SINSOD(void)
 	{
 		if(!fimu.load(1)) break;
 		kf.Update(&pDS->wm, &pDS->vm, pDS->dS, 1, TS5);
-		if (i%10==0)	fins << kf.sins << kf.ODKappa();
+		if (i%10==0)	fins << kf.sins << kf.ODKappa() << kf.lvOD;
 		if (i%50==0)	fkf << kf;
 		//disp(i, FRQ100, 100);
 	}
@@ -588,7 +588,7 @@ void Demo_SysClbt(void)
 int frq=FRQ100;
 	// glvs; [imu, att]=imupos19([[1;-91;-92]*glv.deg; glv.pos0], 0.01, 20, 70); imuplot(imu);
 	// binfile32('D:\psins240513\data\imupos19.bin', imuclbt(imu));
-	CFileRdWt::Dir("D:\\psins240513\\data\\");
+	CFileRdWt::Dir("C:\\Users\\12778\\source\\repos\\CPSINS\\Data");
 	CFileRdWt fimu("imupos19.bin", -7), fclbt("clbt.bin"), fins("ins.bin");
 	CVect3 pos0=LLH(34.034310, 108.775427, 450), *pwm, *pvm;	double *pt;
 	deal(fimu.buff, &pwm,0, &pvm,3, &pt,6, NULL);

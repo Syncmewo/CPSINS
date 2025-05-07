@@ -4742,19 +4742,24 @@ CVAutoPOS::CVAutoPOS(void)
 {
 }
 
-CVAutoPOS::CVAutoPOS(double ts):CSINSGNSSOD(18,3,ts)    //(18,3)
+CVAutoPOS::CVAutoPOS(double ts):CSINSGNSSOD(21,3,ts)    //(21,3) // 增加了杆臂状态 18-20
 {
 }
 
 void CVAutoPOS::Init(const CSINS &sins0, int grade)
 {
 	CSINSGNSSOD::Init(sins0,grade);
-	Pmin.Set2(fPHI(0.01,.1), fXXX(0.0001), fdPOS(0.001),
-		fDPH3(0.001), fXYZU(10,10,50,UG), 0.0*DEG, 0.000, 0.0*DEG);
-	// States   0-14: phi,dvn,dpos,eb,db; 15-17: Kappa;
-	Pk.SetDiag2(fPHI(3.0,10.0), fXXX(0.5), fdPOS(1.0),
-		fDPH3(0.05), fXYZU(50,50,1000,UG), 0.5*DEG, 0.01, 0.50*DEG);
-	Qt.Set2(fDPSH3(0.005), fUGPSHZ3(10), fOO9, fOOO);
+
+	//PS:注意在增加状态时，最好对Pmax、Pmin都进行设置，否在在继承前一类的设置参数时候会出现问题！
+	//前一类的滤波器初始化中相应状态位置可能已经设置了参数，后续新增状态覆盖该位置时，滤波器参数也需一同更改，否在会出现问题！
+	Pmax.Set2(fPHI(300, 1000), fXXX(300), fdPOS(1000),
+		fDPH3(100), fXYZU(10000, 10000, 50000, UG), 100.0 * DEG, 100.000, 100.0 * DEG, fXXX(100.0));
+	Pmin.Set2(fPHI(0.01,.1), fXXX(0.001), fdPOS(0.001),
+		fDPH3(0.001), fXYZU(10,10,50,UG), 0.0*DEG, 0.000, 0.0*DEG,fXXX(0.0));
+	// States   0-14: phi,dvn,dpos,eb,db; 15-17: Kappa; 18-19:lvOD ;
+	Pk.SetDiag2(fPHI(3.0,10.0), fXXX(0.5), fdPOS(10.0),
+		fDPH3(0.1), fXYZU(100,100,300,UG), 0.5*DEG, 0.01, 0.50*DEG,fXXX(1.0));
+	Qt.Set2(fDPSH3(0.01), fUGPSHZ3(10), fOO9, fOOO,fOOO);
 	// Meas     0-3: SINS/OD-dvn
 	Rt.Set2(fXYZ(0.1,0.1,0.1));  Rt0 = Rt;
 	FBTau = 1.0;
@@ -4774,13 +4779,14 @@ void CVAutoPOS::Feedback(int nnq, double fbts)
 	CSINSGNSS::Feedback(15, fbts);
 	Cbo = Cbo*a2mat(CVect3(FBXk.dd[15],0.0,FBXk.dd[17])); // C^b_o = C^b_o' * C^o'_o
 	Kod *= 1 - FBXk.dd[16];
+	lvOD += *(CVect3*)&FBXk.dd[18];
 }
 
 int CVAutoPOS::Update(const CVect3 *pwm, const CVect3 *pvm, double dS, int nn, double ts, int nSteps)
 {
 	int res = CSINSGNSSOD::Update(pwm, pvm, dS, nn, ts, nSteps);
 	if(odmeasOK) {
-		Hk.SetMat3(0, 0, odMphi, odMvn); Hk.SetMat3(0, 15, odMkappa);
+		Hk.SetMat3(0, 0, odMphi, odMvn); Hk.SetMat3(0, 15, odMkappa,odMlever);
 		*(CVect3*)&Zk.dd[0] = odZk;  // SINS/OD-dvn
 		SetMeasFlag(07);
 	}
