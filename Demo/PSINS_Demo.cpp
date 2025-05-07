@@ -272,7 +272,7 @@ void Demo_CSINSGNSSDR(void)
 void Demo_SINSOD(void)
 {
 	typedef struct { CVect3 wm, vm; double dS; double t; } DataSensor8;
-	CFileRdWt::Dir(".\\Data\\",".\\Data\\");
+	CFileRdWt::Dir(".\\Data",".\\Data");
 	CFileRdWt fins("ins.bin"), fkf("kf.bin");
 	CFileRdWt fimu("imuod.bin",-8);	DataSensor8 *pDS=(DataSensor8*)&fimu.buff[0];
 

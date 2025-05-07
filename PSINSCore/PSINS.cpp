@@ -4511,7 +4511,10 @@ int CSINSGNSSOD::ODVelUpdate(double dS)
 	distance += 2;
 	if(++distK0==distN) { distK0=0; } distT01=distance-distances[distK0]; distances[distK0]=distance;  // distT01=dist increment within [T0,T1]
 	odVel = distT01/(distN*sins.nts);
-	CVect3 dSn = sins.Cnb*(CVect3(Cbo.e01*dS,Cbo.e11*dS,Cbo.e21*dS)-sins.imu.phim*lvOD);  // dSn = Cnb*Cbo*dSb
+
+	/*sins.imu.phim* lvOD 里程计相对于惯组的杆臂误差因素（载体旋转引起），
+	  CSINSGNSSDR::Update中dS未扣除这部分因素原因是在CSINSGNSSDR::SetMeas中量测设置已经考虑了杆臂影响（posDR）*/
+	CVect3 dSn = sins.Cnb*(CVect3(Cbo.e01*dS,Cbo.e11*dS,Cbo.e21*dS)-sins.imu.phim*lvOD);  // dSn = Cnb*Cbo*dSb 
 	odmeast += sins.nts;
 	if(odmeast>=odmeasT) {  // take measurement every (odmeasT)(s)
 		odMphi = -askew(odmeast/2.0*Ifn+IVno);  odMphi.e02*=Hkv2y,odMphi.e12*=Hkv2y;
