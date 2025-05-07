@@ -16,6 +16,10 @@
 # Mono auto generated files
 mono_crash.*
 
+# Data
+/Data/*
+!/Data/.gitkeep
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

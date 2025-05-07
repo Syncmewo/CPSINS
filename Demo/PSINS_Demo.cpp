@@ -271,22 +271,58 @@ void Demo_CSINSGNSSDR(void)
 
 void Demo_SINSOD(void)
 {
-	typedef struct { CVect3 wm, vm; double dS; CVect3 att, vn, pos; double t; } DataSensor17;
-	CFileRdWt::Dir("D:\\psins210823\\data\\");
+	typedef struct { CVect3 wm, vm; double dS; double t; } DataSensor8;
+	CFileRdWt::Dir(".\\Data\\",".\\Data\\");
 	CFileRdWt fins("ins.bin"), fkf("kf.bin");
-	CFileRdWt fimu("imuod.bin",-17);	DataSensor17 *pDS=(DataSensor17*)&fimu.buff[0];
-	fimu.load(1);
-	CVAutoPOS kf(TS10); 
-	kf.Init(CSINS(pDS->att, pDS->vn, pDS->pos, pDS->t), 0); 
-	kf.sins.AddErr(0.1*DEG);
+	CFileRdWt fimu("imuod.bin",-8);	DataSensor8 *pDS=(DataSensor8*)&fimu.buff[0];
 
-	for(int i=0; i<6000*FRQ100; i++)
+	double Aligni0T = 60.0;
+	double AlignkfT = 120.0;
+	double tk0 = 0.0;
+
+	CVect3 pos0 = CVect3(0.492701432354952,1.97212828764260,40.2028701195959);
+	CVect3 att0 = CVect3(0,0,0); 
+
+	CAligni0fit Alni0(pos0);
+	CAlignkf Alnkf(TS5);
+	CVAutoPOS kf(TS5); 
+
+	for (int i = 0;; i++) {
+		if (!fimu.load(1)) break;
+
+		Alni0.Update(&pDS->wm, &pDS->vm, 1, TS5);
+
+		if (i == Aligni0T * FRQ200) {
+			att0 = q2att(Alni0.qnb);
+			printf("粗对准结束\r\n PRY:%f %f %f\r\n", att0.i / DEG, att0.j / DEG, att0.k / DEG);
+			break;
+		}
+
+	}
+
+	Alnkf.Init(CSINS(att0, O31, pos0));
+	for (int i = 0;; i++) {
+		if (!fimu.load(1)) break;
+
+		Alnkf.Update(&pDS->wm, &pDS->vm, 1, TS5);
+
+		if (i == AlignkfT * FRQ200) {
+			att0 = q2att(Alnkf.qnb);
+			tk0 = Alnkf.kftk;
+			printf("精对准结束\r\n PRY:%f %f %f\r\n", att0.i / DEG, att0.j / DEG, att0.k / DEG);
+			break;
+		}
+	}
+
+	kf.Init(CSINS(att0, O31, pos0, tk0), 0);
+
+	for(int i=0;; i++)
 	{
 		if(!fimu.load(1)) break;
-		kf.Update(&pDS->wm, &pDS->vm, pDS->dS, 1, TS10, 6);
+		kf.Update(&pDS->wm, &pDS->vm, pDS->dS, 1, TS5);
 		if (i%10==0)	fins << kf.sins << kf.ODKappa();
 		if (i%50==0)	fkf << kf;
-		disp(i, FRQ100, 100);
+		//disp(i, FRQ100, 100);
 	}
 }
 
