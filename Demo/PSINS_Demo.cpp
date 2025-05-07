@@ -177,7 +177,7 @@ void Demo_CAligntf(void)
 			alntf.SetMeasVnAtt(pps->vn, pps->att);
 		}
 
-		// 时间延迟估计有点问题
+		//  时间延迟估计有点问题
 		printf("安装角(arcmin):%f %f %f 杆臂:%f %f %f 延迟(ms):%f\r\n", alntf.mu.i/glv.min, alntf.mu.j / glv.min, alntf.mu.k / glv.min,
 																		alntf.lvMINS.i, alntf.lvMINS.j, alntf.lvMINS.k,
 																		alntf.dtMINSdelay * 1000);
