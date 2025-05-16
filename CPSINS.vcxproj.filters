@@ -27,6 +27,9 @@
     <ClCompile Include="psinscore\PSINS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CAlignKF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="demo\PSINS_Demo.h">
@@ -39,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="uart\SerialPort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CAlignKF.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

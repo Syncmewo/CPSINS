@@ -119,12 +119,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CAlignKF.cpp" />
     <ClCompile Include="demo\PSINS_Demo.cpp" />
     <ClCompile Include="Main_SinsGps.cpp" />
     <ClCompile Include="psinscore\KFApp.cpp" />
     <ClCompile Include="psinscore\PSINS.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CAlignKF.h" />
     <ClInclude Include="demo\PSINS_Demo.h" />
     <ClInclude Include="psinscore\KFApp.h" />
     <ClInclude Include="psinscore\PSINS.h" />

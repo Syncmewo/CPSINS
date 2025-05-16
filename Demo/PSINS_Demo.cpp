@@ -1,4 +1,5 @@
 #include "PSINS_Demo.h"
+#include "..\CAlignKF.h"
 
 #define PSINSDemo
 #ifdef  PSINSDemo
@@ -189,32 +190,131 @@ void Demo_CAligntf(void)
 
 void Demo_CAlign_CSINS(void)
 {
-	CFileRdWt::Dir("..\\Data\\", ".\\Data\\");
-	CFileIMU6 fimu("lasergyro.imu"); CFileRdWt faln("aln.bin"), fins("ins.bin");
-//	CAligni0 aln(pos0);
-	CAlignkf aln(CSINS(fimu.att0,fimu.vn0,fimu.pos0),fimu.ts);
-	CSINS sins;
+	typedef struct { CVect3 wm, vm; double t; } DataSensor7;
+	CFileRdWt::Dir("C:\\Users\\12778\\source\\repos\\CPSINS\\Data", "C:\\Users\\12778\\source\\repos\\CPSINS\\Data");
+	CFileRdWt fimu("RINSGyro18h.imu",-7); 
+	DataSensor7* pDS = (DataSensor7*)&fimu.buff[0];
+	CFileRdWt faln("aln.bin"), fins("ins.bin"), fkf("kf.bin");
+
+	double ts = 1.0 / 200;
+
+	CVect3 vn0 = O31;
+	CVect3 pos0 = CVect3(30.391845 * glv.deg, 114.348821 * glv.deg, 84.124298);
+
+	CAligni0 alni0(pos0);
+	CAlignkf aln(TS5);
+
+	CAlignVn my_Aln;
+
 	int alnOK=0;
-	for(int i=0; i<2000*100; i++)
-	{
-		if(!fimu.load(1)) break;
-		if(i>600*100)
+
+	for (int i = 0;; i++) {
+
+		if (!fimu.load(1)) break;
+		alni0.Update(&pDS->wm, &pDS->vm, 1, ts);
+
+		if (i == 60 * 200)
 		{
-			if(!alnOK) {
-				alnOK=1;
-				sins.Init(aln.qnb, O31, fimu.pos0, aln.kftk);
-			}
-			else {
-				sins.Update(fimu.pwm, fimu.pvm, 1, fimu.ts);
-				fins<<sins;
-			}
+			CVect3 att0 = q2att(alni0.qnb);
+			printf("粗对准结束\r\n PRY:%f %f %f\r\n", att0.i / DEG, att0.j / DEG, att0.k / DEG);
+			break;
 		}
-		else {
-			aln.Update(fimu.pwm, fimu.pvm, 1, fimu.ts);
-			faln<<q2att(aln.qnb)<<aln.kftk;
-		}
-		disp(i, 100, 100);
 	}
+
+	CSINS sins0 = CSINS(alni0.qnb, vn0, pos0);
+	my_Aln.Init(sins0); sins0.mvnT = 0.1;
+	sins0.eb = CVect3(0.001147605221518, 0.004299839895711, 0.008241220860556) * glv.dph;
+	sins0.db = CVect3(707.0030758934283, -332.0925829785173, 528.9309457405552) * glv.ug;
+
+	sins0.Kg = CMat3(1.000001678756445, 0.000067084703753, -0.000028980190621,
+		-0.000062717108618, 1.000008731222084, 0.000109083889684,
+		0.000048841249917, -0.000013125922433, 0.999996220620899);
+	sins0.Ka = CMat3(1.000106139904726, 0, 0,
+		-0.000076889639773, 1.000006575162675, 0,
+		0.000044224826673, -0.000006567638804, 0.999993114381717);
+	sins0.imu.Ka2 = CVect3(30.347741667413644, 0.227915431867348, 8.584968830937440) * glv.ugpg2;
+
+	sins0.imu.lvx = CVect3(0.089681254850365, -0.060699801344016, 0.087589506092873) / 100.0;
+	sins0.imu.lvy = CVect3(0.246926680488336, 0.020383910799560, -0.252677488876463) / 100.0;
+	sins0.imu.lvz = CVect3(0.0);
+
+	sins0.imu.tGA = 2.527736505806636 / 1000.0;
+
+	sins0.imu.pKa2 = &sins0.imu.Ka2;
+	sins0.imu.plv  = &sins0.imu.lvx;
+	
+	aln.Init(sins0);
+
+	for (int i = 0;; i++) {
+		
+		if (!fimu.load(1)) break;
+
+		//惯导更新
+		sins0.Update(&pDS->wm, &pDS->vm, 1, ts);
+		//时间更新
+		my_Aln.SetFtSins(sins0);
+		my_Aln.TimeUpdate(ts);
+
+		//量测更新
+		my_Aln.SetKFHk();
+		if (sins0.mvnk == 0 && norm(sins0.wnb) < 0.1 * glv.dps) {
+			my_Aln.SetMeasVn(sins0);
+			my_Aln.MeasUpdate();
+			my_Aln.FeedBack(sins0);
+		}
+
+		aln.Update(&pDS->wm, &pDS->vm, 1, ts);
+		if (i % 200 == 0)
+		{
+			faln << q2att(aln.qnb) << aln.kftk;
+			fkf << my_Aln;
+		}
+
+		if (i == (2960-60) * 200) {
+		
+			CVect3 att0 = q2att(aln.qnb);
+			CVect3 att1 = q2att(my_Aln.qnb);
+			printf("精对准结束\r\n PRY:%f %f %f\r\n", att0.i / DEG, att0.j / DEG, att0.k / DEG);
+			printf("精对准结束\r\n PRY:%f %f %f\r\n", att1.i / DEG, att1.j / DEG, att1.k / DEG);
+			break;
+
+		}
+	}
+	CSINS sins(aln.qnb,vn0,pos0);
+
+	//sins.eb = CVect3(0, 0, -0.01241220860556) * DPH;
+	sins.db = aln.sins.db;
+	sins.eb = aln.sins.eb;
+
+	printf("加表零偏：%6f %6f %6f\r\n", sins0.db.i / UG, sins0.db.j / UG, sins0.db.k / UG);
+	printf("陀螺零偏：%6f %6f %6f\r\n", sins0.eb.i / DPH, sins0.eb.j / DPH, sins0.eb.k / DPH);
+
+	sins.Kg = CMat3(1.000001678756445, 0.000067084703753, -0.000028980190621,
+		-0.000062717108618, 1.000008731222084, 0.000109083889684,
+		0.000048841249917, -0.000013125922433, 0.999996220620899);
+	sins.Ka = CMat3(1.000106139904726, 0, 0,
+		-0.000076889639773, 1.000006575162675, 0,
+		0.000044224826673, -0.000006567638804, 0.999993114381717);
+	sins.imu.Ka2 = CVect3(30.347741667413644, 0.227915431867348, 8.584968830937440) * glv.ugpg2;
+
+	sins.imu.lvx = CVect3(0.089681254850365, -0.060699801344016, 0.087589506092873) / 100.0;
+	sins.imu.lvy = CVect3(0.246926680488336, 0.020383910799560, -0.252677488876463) / 100.0;
+	sins.imu.lvz = CVect3(0.0);
+
+	sins.imu.tGA = 2.527736505806636 / 1000.0;
+
+	sins.imu.pKa2 = &sins.imu.Ka2;
+	sins.imu.plv = &sins.imu.lvx;
+
+	for (int i = 0; ; i++)
+	{
+		if (!fimu.load(1)) break;
+		sins.Update(&pDS->wm, &pDS->vm, 1, ts);
+		sins.vn.k = 0;
+		if (i % 200 == 0) fins << sins;
+		disp(i, 200, 200);
+	}
+	//printf("%f\r\n", aln.sins.db.i/glv.ug);
 }
 
 void Demo_CSINSGNSS(void)
@@ -597,7 +697,8 @@ int frq=FRQ100;
 	fimu.savepos();
 	clbt.sins.Init(O31, O31, pos0, *pt);  clbt.sins.mvnT=0.2;  clbt.sins.isOpenloop=1;
 	psinslog.LogSet(1);
-	for(int n=0; n<=3; n++)
+
+	for(int n=0; n<=10; n++)
 	{
 		fimu.restorepos();  clbt.sins.imu.Reset();  printf(" --- Round %d ---\n", n+1);
 		aln.Init(pos0);

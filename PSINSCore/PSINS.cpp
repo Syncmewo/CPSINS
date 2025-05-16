@@ -3130,10 +3130,10 @@ void CKalman::TimeUpdate(double kfts0, int fback)
 	Xk = Fk * Xk;
 	Pk = Fk*Pk*(~Fk);  Pk += Qt*kfts0;
 	if(fback)  Feedback(nq, kfts0);
-	for(int i=0; i<nr; i++) {
-		measlost.dd[i] += kfts0;
-		if(measstop.dd[i]>0.0f) measstop.dd[i] -= kfts0;
-	}
+	//for(int i=0; i<nr; i++) {
+	//	measlost.dd[i] += kfts0;
+	//	if(measstop.dd[i]>0.0f) measstop.dd[i] -= kfts0;
+	//}
 }
 
 void CKalman::SetStatMask(unsigned int mask2, int k2, unsigned int mask1, int k1, unsigned int mask0)
@@ -3186,26 +3186,27 @@ void CKalman::SetRadptStop(unsigned int meas, double stop)
 int CKalman::MeasUpdate(double fading)
 {
 	CVect Pxz, Kk, Hi;
-	SetMeas();
+	//SetMeas();
 	for(int i=0; i<nr; i++)
 	{
-		if(((measflag&measmask)&(0x01<<i)) && measstop.dd[i]>EPS)
+		//if (((measflag & measmask) & (0x01 << i)) && measstop.dd[i] > EPS)
+		if(((measflag&measmask)&(0x01<<i)))
 		{
 			Hi = Hk.GetRow(i);
 			Pxz = Pk*(~Hi);
 			double Pz0 = (Hi*Pxz)(0,0), r=Zk(i)-(Hi*Xk)(0,0);
-			if(Rb.dd[i]>EPS)
-				RAdaptive(i, r, Pz0);
-			if(Zfd.dd[i]<INFp5)
-				RPkFading(i);
+			//if(Rb.dd[i]>EPS)
+			//	RAdaptive(i, r, Pz0);
+			//if(Zfd.dd[i]<INFp5)
+			//	RPkFading(i);
 			double Pzz = Pz0+Rt.dd[i]/rts.dd[i];
 			Kk = Pxz*(1.0/Pzz);
 			Xk += Kk*r;
 			Pk -= Kk*(~Pxz);
-			measlost.dd[i] = 0.0;
+			//measlost.dd[i] = 0.0;
 		}
 	}
-	if(fading>1.0) Pk *= fading;
+	//if(fading>1.0) Pk *= fading;
 	XPConstrain();
 	symmetry(Pk);
 	int measres = measflag&measmask;
@@ -7456,12 +7457,12 @@ CAlignkf::CAlignkf(void)
 {
 }
 
-CAlignkf::CAlignkf(double ts):CSINSGNSS(15, 6, ts)
+CAlignkf::CAlignkf(double ts):CSINSGNSS(15, 3, ts)
 {
 	CSINSGNSS::Init(CSINS(O31,O31,O31));
 }
 
-CAlignkf::CAlignkf(const CSINS &sins0, double ts):CSINSGNSS(15, 6, ts)
+CAlignkf::CAlignkf(const CSINS &sins0, double ts):CSINSGNSS(15, 3, ts)
 {
 	Init(sins0);
 }
@@ -7469,14 +7470,13 @@ CAlignkf::CAlignkf(const CSINS &sins0, double ts):CSINSGNSS(15, 6, ts)
 void CAlignkf::Init(const CSINS &sins0)
 {
 	CSINSTDKF::Init(sins0);  sins.mvnT = 0.1;
-	Pmax.Set2(fDEG3(30.0), fXXX(50.0), fdPOS(1.0e4), fDPH3(10.0), fMG3(10.0));
-	Pmin.Set2(fXXZU(1.0,10.0, SEC), fXXX(0.001), fdPOS(0.01), fDPH3(0.001), fUG3(1.0));
-	Pk.SetDiag2(fXXZU(1.10,10.0, DEG), fXXX(1.0), fdPOS(100.0), fDPH3(0.05), fUG3(100.0));
+	//Pmax.Set2(fDEG3(30.0), fXXX(50.0), fdPOS(1.0e4), fDPH3(10.0), fMG3(10.0));
+	//Pmin.Set2(fXXZU(1.0,10.0, SEC), fXXX(0.001), fdPOS(0.1), fDPH3(0.01), fUG3(0.1));
+	Pk.SetDiag2(fXXZU(10,30, MIN), fXXX(0.1), fdPOS(10.0), fDPH3(0.1), fUG3(200.0));
 	Qt.Set2(fDPSH3(0.001), fUGPSHZ3(1.0), fXXX(0.0), fXXX(0.0), fXXX(0.0));
-	Xmax.Set(fINF9, fDPH3(0.1), fMG3(1.0));
-	Rt.Set2(fXXX(0.1), fdPOS(100.0));
-	Rmax = Rt*100;  Rmin = Rt*0.01;  Rb = 0.5;
-	FBTau.Set(fXXX(0.1), fXXX(0.1), fINF3, fXXX(1.1), fXXX(1.1));
+	//Xmax.Set(fINF9, fDPH3(0.1), fMG3(1.0));
+	Rt.Set2(fXXX(0.01));
+	FBTau.Set(fXXX(0.1), fXXX(0.1), fINF3, fXXX(0.1), fXXX(0.1));
 	pos0 = sins.pos;  qnb = sins.qnb;
 }
 
