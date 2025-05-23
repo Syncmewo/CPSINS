@@ -30,6 +30,12 @@
     <ClCompile Include="UserDef\CAlignKF.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="point_calib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UserDef\point_calib1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="demo\PSINS_Demo.h">
@@ -45,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UserDef\CAlignKF.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UserDef\point_calib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

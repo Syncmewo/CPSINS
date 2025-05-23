@@ -3,7 +3,9 @@
 
 void main(void)
 {
-	psinsdemo(10);
+	//psinsdemo(10);
+
+	Demo_CAlign_CSINS_SIMU();
 
 	//CFileRdWt::Dir("D:\\ygm2020\\PSINSÍøÕ¾\\¹ßµ¼Êý¾Ý\\", "D:\\psins210207\\VC60\\Data\\");
 	//CFileRdWt fins("ins.bin"), fkf("kf.bin");

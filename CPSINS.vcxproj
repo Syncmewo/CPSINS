@@ -88,6 +88,7 @@
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>C:\Users\12778\source\repos\CPSINS\eigen-3.4.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -121,9 +122,11 @@
   <ItemGroup>
     <ClCompile Include="demo\PSINS_Demo.cpp" />
     <ClCompile Include="Main_SinsGps.cpp" />
+    <ClCompile Include="point_calib.cpp" />
     <ClCompile Include="psinscore\KFApp.cpp" />
     <ClCompile Include="psinscore\PSINS.cpp" />
     <ClCompile Include="UserDef\CAlignKF.cpp" />
+    <ClCompile Include="UserDef\point_calib1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="demo\PSINS_Demo.h" />
@@ -131,6 +134,7 @@
     <ClInclude Include="psinscore\PSINS.h" />
     <ClInclude Include="uart\SerialPort.h" />
     <ClInclude Include="UserDef\CAlignKF.h" />
+    <ClInclude Include="UserDef\point_calib.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="data\PSINS20240616_070415.bin" />

@@ -10,6 +10,7 @@
 #ifndef _PSINS_Demo_H
 #define _PSINS_Demo_H
 
+#include "..\eigen-3.4.0\Eigen\Eigen"
 #include "..\PSINSCore\PSINS.h"
 
 #define FRQ	FRQ200
@@ -86,6 +87,7 @@ void Demo_CIMUInc(void);
 void Demo_Extern_C_example(void);
 void Demo_Extract_Txt_File(void);
 void Demo_operator_pointer_run_time(void);
+void Demo_CAlign_CSINS_SIMU(void);
 
 #ifdef PSINS_IO_FILE
 

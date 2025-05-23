@@ -8,6 +8,7 @@ Date: 17/02/2015, 19/07/2017, 11/12/2018, 27/12/2019, 12/12/2020, 22/11/2021, 17
 */
 
 #include "PSINS.h"
+#include "..\UserDef\point_calib.h"
 
 const CVect3 O31(0.0), One31(1.0), I31Z(0,0,1.0), Ipos(1.0/RE,1.0/RE,1.0), posNWPU=LLH(34.034310, 108.775427, 450); //NWPU-Lab-pos
 const CQuat  qI(1.0,0.0,0.0,0.0);
@@ -1906,6 +1907,7 @@ void CMat::SetAskew(int i, int j, const CVect3 &v)
 	p[0] =-v.j; p[1] = v.i; p[2] = 0.0;
 }
 
+
 void CMat::SetMat3(int i, int j, const CMat3 &m)
 {
 	double *p=&dd[i*clm+j];
@@ -2074,6 +2076,33 @@ CMat MatExam(int i, int j)
 	for(i=0; i<m.rc; i++) m.dd[i]=i;
 	return m;
 }
+
+CMat inv3(const CMat& m)
+{
+	psinsassert(m.clm == m.row && m.clm == 3);  // 确保是方阵
+
+	CMat adjm(3, 3);
+	double detm = m.dd[0] * (m.dd[4] * m.dd[8] - m.dd[5] * m.dd[7]) -
+		m.dd[1] * (m.dd[3] * m.dd[8] - m.dd[5] * m.dd[6]) +
+		m.dd[2] * (m.dd[3] * m.dd[7] - m.dd[4] * m.dd[6]);
+
+	psinsassert(detm != 0);  // 确保矩阵可逆
+
+	adjm.dd[0] = (m.dd[4] * m.dd[8] - m.dd[5] * m.dd[7]);
+	adjm.dd[1] = -(m.dd[1] * m.dd[8] - m.dd[2] * m.dd[7]);
+	adjm.dd[2] = (m.dd[1] * m.dd[5] - m.dd[2] * m.dd[4]);
+
+	adjm.dd[3] = -(m.dd[3] * m.dd[8] - m.dd[5] * m.dd[6]);
+	adjm.dd[4] = (m.dd[0] * m.dd[8] - m.dd[2] * m.dd[6]);
+	adjm.dd[5] = -(m.dd[0] * m.dd[5] - m.dd[2] * m.dd[3]);
+
+	adjm.dd[6] = (m.dd[3] * m.dd[7] - m.dd[4] * m.dd[6]);
+	adjm.dd[7] = -(m.dd[0] * m.dd[7] - m.dd[1] * m.dd[6]);
+	adjm.dd[8] = (m.dd[0] * m.dd[4] - m.dd[1] * m.dd[3]);
+
+	return adjm * (1.0 / detm);  // 归一化，得到逆矩阵
+}
+
 
 CMat inv4(const CMat &m)
 {
@@ -4018,7 +4047,7 @@ void CSINSGNSS::LogXk(void)
 CSysClbt::CSysClbt(const CVect3 &pos0, double g00, int ka2pn):CSINSTDKF(37, 3)
 {
 	iter = 0;
-	wibStatic = 0.1*DPS;
+	wibStatic = 0.4*DPS;
 	Hk.SetMat3(0, 3, I33);  hi1[0]=3,hi1[1]=4,hi1[2]=5;
 	SetMeasMask(07);
 	this->pos0 = pos0;
@@ -4036,17 +4065,17 @@ void CSysClbt::Init(double g00)
 	sins.imu.SetCba();
 	sins.imu.SetLvtGA();
 	// KF para
-	Pmin.Set2(fPHI(0.01,0.1),  fdVEL(0.0001),  fDPH3(0.0001),  fUG3(1.0),
-		fdKGA15(1.0,1.0,1.0,1.0), fdKapn3(0), fInLv6(0.001), 0.00001);
-	Pk.SetDiag2(fPHI(10,60),  fdVEL(0.1),  fDPH3(0.1),  fUG3(100.0),
-		fdKGA15(10000.0,3600.0,10000.0,3600.0), fdKapn3(0), fInLv6(1), 0.001);
-	Qt.Set2(fDPSH3(0.001), fUGPSHZ3(1.0), fOO6,  fOO9,fOO6,  fOOO,fOO6,0.0);
-	Rt.Set2(fXXZ(0.01,0.01));
-	FBMax.Set(fPHI(60,60),  fdVEL(1000.0),  fDPH3(1.0),  fMG3(10.0),
-		fdKGA15(10000.0,3600.0,10000.0,3600.0), fdKapn3(100), fInLv6(20), 0.01);
-	if(ka2ORpn==1) {
+	Pmin.Set2(fPHI(0.01, 0.1), fdVEL(0.0001), fDPH3(0.0001), fUG3(1.0),
+		fdKGA15(1.0, 1.0, 1.0, 1.0), fdKapn3(0), fInLv6(0.001), 0.00001);
+	Pk.SetDiag2(fPHI(10, 60), fdVEL(0.1), fDPH3(0.1), fUG3(100.0),
+		fdKGA15(10000.0, 3600.0, 10000.0, 3600.0), fdKapn3(0), fInLv6(1), 0.001);
+	Qt.Set2(fDPSH3(0.01), fUGPSHZ3(100.0), fOO6, fOO9, fOO6, fOOO, fOO6, 0.0);
+	Rt.Set2(fXXZ(1, 1)*0.001);
+	FBMax.Set(fPHI(60, 60), fdVEL(1000.0), fDPH3(1.0), fMG3(10.0),
+		fdKGA15(10000.0, 3600.0, 10000.0, 3600.0), fdKapn3(100), fInLv6(20), 0.01);
+	if (ka2ORpn == 1) {
 		Pmin.Set2Vect3(27, CVect3(fdKa23(0)));
-		Pk.SetMat3(27, 27, pow(diag(fdKa23(100)),2));
+		Pk.SetMat3(27, 27, pow(diag(fdKa23(100)), 2));
 		FBMax.SetVect3(27, CVect3(fdKa23(100)));
 	}
 	FBTau = 1.0;
@@ -4057,16 +4086,16 @@ void CSysClbt::NextIter(const CQuat &qnb0)
 	sins.qnb = qnb0;  sins.vn = O31;  sins.pos = pos0;
 	TDReset();  sins.imu.Reset();
 	FBTotal = 0.0;
-	if(iter==1) {
-		Pk.SetDiag2(fPHI(1,16),  fdVEL(0.1),  fDPH3(0.02),  fUG3(100.0),
-			fdKGA15(1000.0,600.0,1000.0,600.0), fdKapn3(10), fInLv6(10), 0.01);
-		if(ka2ORpn==1) Pk.SetMat3(27, 27, pow(diag(fdKa23(10)),2));
+	if (iter == 1) {
+		Pk.SetDiag2(fPHI(1, 16), fdVEL(0.1), fDPH3(0.02), fUG3(100.0),
+			fdKGA15(1000.0, 600.0, 1000.0, 600.0), fdKapn3(10), fInLv6(10), 0.01);
+		if (ka2ORpn == 1) Pk.SetMat3(27, 27, pow(diag(fdKa23(10)), 2));
 	}
-	else if(iter>=2) {
+	else if (iter >= 2) {
 		FBMax = FBTau = INF;
-		Pk.SetDiag2(fPHI(1,6),  fdVEL(0.1),  fDPH3(0.01),  fUG3(100.0),
-			fdKGA15(100.0,60.0,100.0,60.0), fdKapn3(100), fInLv6(0.1), 0.001);
-		if(ka2ORpn==1) Pk.SetMat3(27, 27, pow(diag(fdKa23(100)),2));
+		Pk.SetDiag2(fPHI(1, 6), fdVEL(0.1), fDPH3(0.01), fUG3(100.0),
+			fdKGA15(100.0, 60.0, 100.0, 60.0), fdKapn3(100), fInLv6(0.1), 0.001);
+		if (ka2ORpn == 1) Pk.SetMat3(27, 27, pow(diag(fdKa23(100)), 2));
 	}
 	iter++;
 }
@@ -4126,7 +4155,7 @@ int CSysClbt::Update(const CVect3 *pwm, const CVect3 *pvm, int nn, double ts, in
 	int nStep = isStatic ? 2 : 40;
 	int res = TDUpdate(pwm, pvm, nn, ts, nStep);
 	if(sins.mvnk==0) {
-//		*(CVect3*)&Zk.dd[0] = sins.mvn;  sins.pos = pos0;
+		//*(CVect3*)&Zk.dd[0] = sins.mvn;  sins.pos = pos0;
 		*(CVect3*)&Zk.dd[0] = sins.vn;  sins.pos = pos0;
 		if(isStatic) SetMeasFlag(07);
 	}
@@ -5516,7 +5545,7 @@ void CSINS::Update(const CVect3 *pwm, const CVect3 *pvm, int nSamples, double ts
 		fn = qnb*fb;
 		an = rv2q(-eth.wnin*nts2)*fn+eth.gcc;  anbar = (1-afabar)*anbar + afabar*an;
 		CVect3 vn1 = vn + an*nts;
-		pos = pos + eth.vn2dpos(vn+vn1, nts2);	vn = vn1;
+		pos = pos + eth.vn2dpos(vn + vn1, nts2);	vn = vn1; 
 		qnb = rv2q(-eth.wnin*nts)*qnb*rv2q(imu.phim);
 		Cnb = q2mat(qnb); att = m2att(Cnb); Cbn = ~Cnb; vb = Cbn*vn;
 #else  // fast
