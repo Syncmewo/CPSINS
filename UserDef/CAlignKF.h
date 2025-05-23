@@ -1,4 +1,4 @@
-#include "..\CPSINS\PSINSCore\PSINS.h"
+#include "..\PSINSCore\PSINS.h"
 
 
 class CAlignVn :public CKalman

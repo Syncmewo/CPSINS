@@ -119,18 +119,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CAlignKF.cpp" />
     <ClCompile Include="demo\PSINS_Demo.cpp" />
     <ClCompile Include="Main_SinsGps.cpp" />
     <ClCompile Include="psinscore\KFApp.cpp" />
     <ClCompile Include="psinscore\PSINS.cpp" />
+    <ClCompile Include="UserDef\CAlignKF.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CAlignKF.h" />
     <ClInclude Include="demo\PSINS_Demo.h" />
     <ClInclude Include="psinscore\KFApp.h" />
     <ClInclude Include="psinscore\PSINS.h" />
     <ClInclude Include="uart\SerialPort.h" />
+    <ClInclude Include="UserDef\CAlignKF.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="data\PSINS20240616_070415.bin" />
